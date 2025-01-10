@@ -522,6 +522,8 @@ internal class Program
 
         if (options.ForcedBinaryPath == null)
         {
+            if (options.GamePath.StartsWith("~"))
+                options.GamePath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + options.GamePath.Substring(1);
             ResolvePathsFromCommandLine(options.GamePath, options.ExeName, ref result);
         }
         else
@@ -534,7 +536,7 @@ internal class Program
             if (result.UnityVersion.Type == UnityVersionType.Alpha && result.UnityVersion.Build == 0)
                 //Map a0 to f1 - we assume the user simply didn't provide the final part of the version number
                 result.UnityVersion = new UnityVersion(result.UnityVersion.Major, result.UnityVersion.Minor, result.UnityVersion.Build, UnityVersionType.Final, 1);
-            
+
             result.Valid = true;
         }
 
