@@ -6,8 +6,10 @@ namespace LibCpp2IL.Wasm;
 public class WasmMemoryBlock : ClassReadingBinaryReader
 {
     internal byte[] Bytes;
+    private WasmFile _file;
 
-    public override float MetadataVersion { get; }
+    //This isn't valid until Init() is called on the parent WasmFile, but that's fine, nothing should be referencing it until then.
+    public override float MetadataVersion => _file.MetadataVersion;
 
     private static MemoryStream BuildStream(WasmFile file)
     {
@@ -34,7 +36,7 @@ public class WasmMemoryBlock : ClassReadingBinaryReader
 
     public WasmMemoryBlock(WasmFile file) : base(BuildStream(file))
     {
-        MetadataVersion = file.MetadataVersion;
+        _file = file;
         is32Bit = true;
         Bytes = ((MemoryStream)BaseStream).ToArray();
     }
