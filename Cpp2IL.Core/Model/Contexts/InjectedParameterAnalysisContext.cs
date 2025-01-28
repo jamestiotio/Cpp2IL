@@ -11,6 +11,8 @@ public class InjectedParameterAnalysisContext : ParameterAnalysisContext
     public override bool IsRef => ParameterTypeContext is ReferencedTypeAnalysisContext;
 
     public override ParameterAttributes ParameterAttributes => ParameterAttributes.None;
+    
+    protected override bool IsInjected => true;
 
     public InjectedParameterAnalysisContext(string? name, Il2CppType type, int paramIndex, MethodAnalysisContext declaringMethod)
         : this(name, declaringMethod.DeclaringType!.DeclaringAssembly.ResolveIl2CppType(type) ?? throw new($"Type {type} could not be resolved."), paramIndex, declaringMethod)

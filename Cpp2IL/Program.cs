@@ -17,7 +17,10 @@ using Cpp2IL.Core.Exceptions;
 using LibCpp2IL.Wasm;
 using AssetRipper.Primitives;
 using Cpp2IL.Core.Extensions;
+
+#if NET472
 using LibCpp2IL;
+#endif
 
 namespace Cpp2IL;
 
@@ -28,10 +31,15 @@ internal class Program
 
     public static readonly string Cpp2IlVersionString = typeof(Program).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()!.InformationalVersion;
 
-    private static void ResolvePathsFromCommandLine(string gamePath, string? inputExeName, ref Cpp2IlRuntimeArgs args)
+    private static void ResolvePathsFromCommandLine(string? gamePath, string? inputExeName, ref Cpp2IlRuntimeArgs args)
     {
         if (string.IsNullOrEmpty(gamePath))
             throw new SoftException("No force options provided, and no game path was provided either. Please provide a game path or use the --force- options.");
+        
+        //Somehow the above doesn't tell .net that gamePath can't be null on net472, so we do this stupid thing to avoid nullable warnings
+#if NET472
+        gamePath = gamePath!;
+#endif
 
         Logger.VerboseNewline("Beginning path resolution...");
 
@@ -341,7 +349,7 @@ internal class Program
         ZipArchiveEntry? configApk = null;
         var configApks = xapkZip.Entries.Where(e => e.FullName.Contains("config.") && e.FullName.EndsWith(".apk")).ToList();
 
-        var instructionSetPreference = new string[] { "arm64_v8a", "arm64", "armeabi_v7a", "arm" };
+        var instructionSetPreference = new[] { "arm64_v8a", "arm64", "armeabi_v7a", "arm" };
         foreach (var instructionSet in instructionSetPreference)
         {
             configApk = configApks.FirstOrDefault(e => e.FullName.Contains(instructionSet));
@@ -495,7 +503,9 @@ internal class Program
 
         ConsoleLogger.ShowVerbose = options.Verbose;
 
+#pragma warning disable IL2026 // RequiresUnreferencedCode
         Cpp2IlApi.Init();
+#pragma warning restore IL2026
 
         if (options.ListProcessors)
         {
@@ -522,8 +532,14 @@ internal class Program
 
         if (options.ForcedBinaryPath == null)
         {
-            if (options.GamePath.StartsWith("~"))
-                options.GamePath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + options.GamePath.Substring(1);
+#if !NET472
+            if (options.GamePath != null && options.GamePath.StartsWith('~'))
+                options.GamePath = string.Concat(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), options.GamePath.AsSpan(1));
+#else
+            if (options.GamePath != null && options.GamePath.StartsWith("~"))
+                options.GamePath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + options.GamePath[1..];
+#endif
+                
             ResolvePathsFromCommandLine(options.GamePath, options.ExeName, ref result);
         }
         else

@@ -1,3 +1,5 @@
+//#define NOT_REALLY_PARALLEL_FOR_TESTING
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -247,7 +249,9 @@ public static class MiscUtils
         }
 
         enumerable
+#if !NOT_REALLY_PARALLEL_FOR_TESTING
             .AsParallel()
+#endif
             .Select((Func<T, bool>)F2)
             .ToList();
     }

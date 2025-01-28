@@ -10,6 +10,8 @@ public class InjectedTypeAnalysisContext : TypeAnalysisContext
     public override string DefaultNs { get; }
 
     public override TypeAttributes TypeAttributes { get; }
+    
+    protected override bool IsInjected => true;
 
     public InjectedTypeAnalysisContext(AssemblyAnalysisContext containingAssembly, string name, string ns, TypeAnalysisContext? baseType, TypeAttributes typeAttributes = DefaultTypeAttributes) : base(null, containingAssembly)
     {

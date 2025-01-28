@@ -11,7 +11,7 @@ namespace Cpp2IL;
 public class CommandLineArgs
 {
     [Option("game-path", HelpText = "Specify path to the game folder (containing the exe)")]
-    public string GamePath { get; set; } = null!; //Suppressed because it's set by CommandLineParser.
+    public string? GamePath { get; set; } = null!; //Suppressed because it's set by CommandLineParser.
 
     [Option("exe-name", HelpText = "Specify an override for the unity executable name in case the auto-detection doesn't work.")]
     public string? ExeName { get; set; }

@@ -11,6 +11,8 @@ public class InjectedMethodAnalysisContext : MethodAnalysisContext
     public override bool IsStatic { get; }
 
     public override MethodAttributes Attributes { get; }
+    
+    protected override bool IsInjected => true;
 
     public InjectedMethodAnalysisContext(TypeAnalysisContext parent, string name, bool isStatic, TypeAnalysisContext returnType, MethodAttributes attributes, TypeAnalysisContext[] injectedParameterTypes, string[]? injectedParameterNames = null) : base(null, parent)
     {

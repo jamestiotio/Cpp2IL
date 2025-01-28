@@ -20,6 +20,7 @@ public abstract class HasCustomAttributes(uint token, ApplicationAnalysisContext
     : HasToken(token, appContext)
 {
     private bool _hasAnalyzedCustomAttributeData;
+    private bool _hasInitCustomAttributeData;
 
     /// <summary>
     /// On V29, stores the custom attribute blob. Pre-29, stores the bytes for the custom attribute generator function.
@@ -63,11 +64,16 @@ public abstract class HasCustomAttributes(uint token, ApplicationAnalysisContext
     public abstract AssemblyAnalysisContext CustomAttributeAssembly { get; }
 
     public abstract string CustomAttributeOwnerName { get; }
+    
+    /// <summary>
+    /// Returns true if this member is injected by Cpp2IL (and thus should not be analyzed for custom attributes).
+    /// </summary>
+    protected virtual bool IsInjected { get; } = false;
 
     /// <summary>
-    /// Pre-v29, stores the index of the custom attribute range for this member. Post-v29, always 0.
+    /// Pre-v29, stores the index of the custom attribute range for this member. Post-v29, always -1.
     /// </summary>
-    private int Pre29RangeIndex;
+    private int Pre29RangeIndex = -1;
 
     public bool IsCompilerGeneratedBasedOnCustomAttributes =>
         CustomAttributes?.Any(a => a.Constructor.DeclaringType!.FullName.Contains("CompilerGeneratedAttribute"))
@@ -80,6 +86,10 @@ public abstract class HasCustomAttributes(uint token, ApplicationAnalysisContext
 
     protected void InitCustomAttributeData()
     {
+        if(IsInjected)
+            return;
+        
+        _hasInitCustomAttributeData = true;
         if (AppContext.MetadataVersion >= 29)
         {
             var offsets = GetV29BlobOffsets();
@@ -157,6 +167,12 @@ public abstract class HasCustomAttributes(uint token, ApplicationAnalysisContext
         }
         else
         {
+            if(AttributeTypeRange == null || AttributeTypeRange.count == 0)
+            {
+                RawIl2CppCustomAttributeData = Array.Empty<byte>();
+                return;
+            }
+            
             var baseAddress = CustomAttributeAssembly.CodeGenModule!.customAttributeCacheGenerator;
             var relativeIndex = rangeIndex - CustomAttributeAssembly.Definition.Image.customAttributeStart;
             var ptrToAddress = baseAddress + (ulong)relativeIndex * AppContext.Binary.PointerSize;
@@ -181,6 +197,12 @@ public abstract class HasCustomAttributes(uint token, ApplicationAnalysisContext
     {
         if (_hasAnalyzedCustomAttributeData)
             return;
+        
+        if(IsInjected)
+            return;
+        
+        if(!_hasInitCustomAttributeData)
+            throw new($"Must call InitCustomAttributeData before AnalyzeCustomAttributeData on {this}");
 
         _hasAnalyzedCustomAttributeData = true;
 
